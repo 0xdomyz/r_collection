@@ -18,19 +18,17 @@ std <- function(v){
 # 0.5263322 0.4736678
 # 
 # $calibration
-# [1]  8.936298e-01 -3.194421e-17
+#             a             b 
+#  8.936298e-01 -3.194421e-17
 # weights_to_parameters(w$weights, w$calibration[1])
 #       cyl      disp
 # 0.4703462 0.4232837
 parameters_to_weights <- function(intercept, parameters){
-    weights = abs(parameters)/sum(abs(parameters))
-    calibration_a = sum(abs(parameters))
-    calibration_b = intercept
-    names(calibration_b) = NULL
-
+    intercept = intercept
+    names(intercept) = NULL
     list(
-        'weights' = weights,
-        'calibration' = c(calibration_a, calibration_b)
+        'weights' = abs(parameters)/sum(abs(parameters)),
+        'calibration' = c('a' = sum(abs(parameters)), 'b' = intercept)
     )
 }
 
