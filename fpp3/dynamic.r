@@ -20,15 +20,29 @@ plot_arima_error = function(fit, index_col) {
         mutate(
             type = factor(type, levels=c("Regression residuals", "ARIMA residuals"))
         ) %>%
-        ggplot(aes(x = Quarter, y = .resid)) +
+        ggplot(aes(x = index, y = .resid)) +
         geom_line() +
         facet_grid(vars(type))
     return(plt)
 }
 
 
+# Examples
+# ------------
+# fit = lm(mpg ~ wt + disp + hp + qsec, mtcars)
+# summary(fit)
+# make_adjr2(predict(fit, mtcars), mtcars$mpg, 4)
+make_adjr2 <- function (x, y, k) {
+    n = length(x)
+    r2 = cor(x, y) ^ 2
+    return(1 - (1 - r2) * (n - 1)/(n - k - 1))
+}
+
+
 if (identical(environment(), globalenv())) {
-    fit = fpp3::us_change %>%
+    data = fpp3::us_change
+
+    fit = data %>%
         model(ARIMA(
             Consumption ~ Income + Production + Savings + Unemployment +
             pdq(d=0)
@@ -43,8 +57,11 @@ if (identical(environment(), globalenv())) {
     generics::augment(fit) %>%
         fabletools::features(.innov, feasts::ljung_box, dof = 8, lag = 7)
 
-    fabletools::forecast(fit, fpp3::us_change) %>%
-        autoplot(fpp3::us_change)
+    calc = fabletools::forecast(fit, data)
+
+    make_adjr2(calc$.mean, data$Consumption, 8)
+
+    calc %>% autoplot(data)
 
 
 }
