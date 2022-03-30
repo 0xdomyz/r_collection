@@ -8,9 +8,12 @@ make_r2 <- function (x, y) cor(x, y) ^ 2
 # fit = lm(mpg ~ wt + disp + hp + qsec, mtcars)
 # summary(fit)
 # make_adjr2(predict(fit, mtcars), mtcars$mpg, 4)
+# make_adjr2(c(NA, 3,predict(fit, mtcars)), c(NA, NA, mtcars$mpg), 4)
 make_adjr2 <- function (x, y, k) {
-    n = length(x)
-    r2 = cor(x, y) ^ 2
+    nx = sum(!is.na(x))
+    ny = sum(!is.na(y))
+    n = min(nx, ny)
+    r2 = cor(x, y, use = 'pairwise.complete.obs') ^ 2
     return(1 - (1 - r2) * (n - 1)/(n - k - 1))
 }
 
