@@ -67,6 +67,21 @@ parameters_to_formula = function(parameters, target){
     as.formula(fml_target)
 }
 
+# Examples
+# -------------
+# > fml = make_formula(c('cyl', 'disp', 'hp', 'drat'), 'mpg')
+# > lm(fml, mtcars)$coefficients
+# (Intercept)         cyl        disp          hp        drat
+# 23.98524441 -0.81402201 -0.01389625 -0.02317068  2.15404553
+# > fml = make_formula(c('cyl', 'disp', 'hp', 'drat'), 'mpg', 0)
+# > lm(fml, mtcars)$coefficients
+#          cyl         disp           hp         drat
+#  0.711008285 -0.009176678 -0.043640211  6.701808900
+make_formula = function(parameters, target, intercept = 1){
+    fml = str_c(c(intercept, parameters), collapse = ' + ')
+    fml_target = str_c(target, fml, sep=' ~ ')
+    as.formula(fml_target)
+}
 
 # Examples
 # --------------
