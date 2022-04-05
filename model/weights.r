@@ -59,7 +59,7 @@ weights_to_parameters <- function(weights, signs, calibration_a){
 # > pred_from_fml = eval(parse(text = fml), mtcars)
 # > pred_from_fit = predict(fit, mtcars)
 # > names(pred_from_fit) = NULL
-# > sum(abs(pred_from_fml - pred_from_fit) > 1e10)
+# > sum(abs(pred_from_fml - pred_from_fit) > 1e-10)
 # [1] 0
 parameters_to_formula = function(parameters, target){
     inter = parameters[1]
