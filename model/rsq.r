@@ -1,43 +1,56 @@
-import::here('std.r', std, .directory = here::here('model'))
-import::here('weights.r', parameters_to_weights, .directory = here::here('model'))
-
-make_r2 <- function (x, y) cor(x, y) ^ 2
-
 # Examples
-# ------------
-# fit = lm(mpg ~ wt + disp + hp + qsec, mtcars)
-# summary(fit)
-# make_adjr2(predict(fit, mtcars), mtcars$mpg, 4)
-# make_adjr2(c(NA, 3,predict(fit, mtcars)), c(NA, NA, mtcars$mpg), 4)
-make_adjr2 <- function (x, y, k) {
-    nx = sum(!is.na(x))
-    ny = sum(!is.na(y))
-    n = min(nx, ny)
-    r2 = cor(x, y, use = 'pairwise.complete.obs') ^ 2
-    return(1 - (1 - r2) * (n - 1)/(n - k - 1))
+# --------------
+# > fit = lm(mpg ~ cyl + disp, mtcars); summary(fit)
+# 
+# Residuals:
+#     Min      1Q  Median      3Q     Max
+# -4.4213 -2.1722 -0.6362  1.1899  7.0516
+# 
+# Residual standard error: 3.055 on 29 degrees of freedom
+# Multiple R-squared:  0.7596,    Adjusted R-squared:  0.743
+# F-statistic: 45.81 on 2 and 29 DF,  p-value: 1.058e-09
+# 
+# > make_r2(predict(fit, mtcars), mtcars$mpg)
+# [1] 0.7595658
+# > make_adjr2(predict(fit, mtcars), mtcars$mpg, 2)
+# [1] 0.7429841
+# > fit = lm(mpg ~ 0 + cyl + disp, mtcars); summary(fit)
+#
+# Residual standard error: 8.164 on 30 degrees of freedom
+# Multiple R-squared:  0.8576,    Adjusted R-squared:  0.8481
+# F-statistic: 90.33 on 2 and 30 DF,  p-value: 2.008e-13
+# 
+# > make_r2(predict(fit, mtcars), mtcars$mpg, model_has_intercept = FALSE)
+# [1] 0.8575967
+# > make_adjr2(predict(fit, mtcars), mtcars$mpg, 2, model_has_intercept = FALSE)
+# [1] 0.8481031
+make_r2 <- function (preds, actual, model_has_intercept = TRUE){
+    if (model_has_intercept){
+        rss <- sum((preds - actual) ^ 2, na.rm = TRUE)
+        tss <- sum((actual - mean(actual)) ^ 2, na.rm = TRUE)
+        return(1 - rss/tss)
+    } else if (!model_has_intercept) {
+        rss <- sum((preds - actual) ^ 2, na.rm = TRUE)
+        tss <- sum((actual) ^ 2, na.rm = TRUE)
+        return(1 - rss/tss)
+    } else {
+        return('invalid model_has_intercept')
+    }
+}
+
+make_adjr2 <- function (preds, actual, k, model_has_intercept = TRUE) {
+    n = sum(!is.na(preds))
+    r2 = make_r2(preds, actual, model_has_intercept)
+    if (model_has_intercept){
+        return(1 - (1 - r2) * (n - 1)/(n - k - 1))
+    } else if (!model_has_intercept) {
+        return(1 - (1 - r2) * (n)/(n - k))
+    } else {
+        return('invalid model_has_intercept')
+    }
 }
 
 if (identical(environment(), globalenv())){
-    data = mtcars |> dplyr::mutate_all(std)
-    fit = lm(mpg ~ ., data)
-    summary(fit)
-    ce = fit$coefficients
-    parameters_to_weights(ce[1], ce[2:length(ce)])
-    preds = predict(fit, data)
-    actual = data$mpg
-
-    rss <- sum((preds - actual) ^ 2); rss
-    tss <- sum((actual - mean(actual)) ^ 2); tss
-    r2 <- 1 - rss/tss; r2
-
-    r2 = make_r2(actual, preds); r2
-
-    r2 = cor(actual, preds) ^ 2; r2
-
-    n = nrow(mtcars)
-    k = ncol(mtcars) - 1
-    r2_adj = 1 - (1 - r2) * (n - 1)/(n - k - 1); r2_adj
-
-    make_adjr2(actual, preds, 10)
+    1
 }
 
