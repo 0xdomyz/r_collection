@@ -2,15 +2,18 @@ import::here(here, here)
 import::here('rsq.r', make_adjr2, .directory = here('model'))
 import::here(stringr, str_c)
 
+# Examples
+# -----------
+# > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 
 # Examples
 # -----------
-# > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 # > data = purrr::map(mtcars, std) |> dplyr::bind_cols()
+# > data$mpg = mtcars$mpg
 # > ce = lm(mpg ~ cyl+disp, data)$coefficients; ce
-#   (Intercept)           cyl          disp
-# -3.194421e-17 -4.703462e-01 -4.232837e-01 
+# (Intercept)         cyl        disp 
+#   20.090625   -2.834752   -2.551109 
 # > w = parameters_to_weights(ce); w
 # $weights
 #       cyl      disp
@@ -21,12 +24,12 @@ std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 #   -1   -1
 # 
 # $calibration
-#             a             b
-#  8.936298e-01 -3.194421e-17
+#         a         b
+#  5.385861 20.090625
 # 
 # > weights_to_parameters(w$weights, w$signs, w$calibration[1])
-#        cyl       disp
-# -0.4703462 -0.4232837
+#       cyl      disp
+# -2.834752 -2.551109
 parameters_to_weights <- function(parameters){
     inter = parameters[1]
     names(inter) = NULL
