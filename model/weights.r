@@ -1,6 +1,7 @@
 import::here(here, here)
-import::here('rsq.r', make_adjr2, .directory = here('model'))
+import::here('rsq.r', make_r2, make_adjr2, .directory = here('model'))
 import::here(stringr, str_c)
+import::here(Hmisc, rcorr.cens)
 
 # Examples
 # -----------
@@ -80,8 +81,8 @@ parameters_to_formula = function(parameters, target){
 # > lm(fml, mtcars)$coefficients
 #          cyl         disp           hp         drat
 #  0.711008285 -0.009176678 -0.043640211  6.701808900
-make_formula = function(parameters, target, intercept = 1){
-    fml = str_c(c(intercept, parameters), collapse = ' + ')
+make_formula = function(variables, target, intercept = 1){
+    fml = str_c(c(intercept, variables), collapse = ' + ')
     fml_target = str_c(target, fml, sep=' ~ ')
     as.formula(fml_target)
 }
@@ -115,31 +116,117 @@ parameters_to_norm_parameters <- function(intercept, parameters, means, stds) {
     )
 }
 
-if (identical(environment(), globalenv())){
-    data = purrr::map(mtcars, std) |> dplyr::bind_cols()
-    fit = lm(mpg ~ cyl + disp + hp + drat, data)
+# > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
+# > data = purrr::map(mtcars, std) |> dplyr::bind_cols()
+# > data$mpg = mtcars$mpg
+# > fit_lm(c('cyl', 'disp'), 'mpg', data, 2)
+# > fit_lm(c('cyl', 'disp'), 'mpg', data, 2, concise=FALSE)
+# > vars = setdiff(colnames(mtcars),'mpg')
+# > fit_lm(vars, 'mpg', data, 10)
+# > fit_lm(c('disp', 'hp', 'wt', 'qsec', 'am'), 'mpg', data, 5)
+fit_lm = function(
+        variables,
+        target,
+        data,
+        k,
+        model_has_intercept=TRUE,
+        concise=TRUE
+    ){
+    fml = make_formula(variables, target, model_has_intercept*1)
+    fit = lm(fml, data)
     ce = fit$coefficients
-    inter = ce[1]
-    w = parameters_to_weights(ce); w$weights
-    make_adjr2(predict(fit, data), data$mpg, 4)
+    if (model_has_intercept){
+        wts = parameters_to_weights(ce)
+    } else {
+        wts = parameters_to_weights(c(0, ce))
+    }
+    preds = predict(fit, data)
+    actual = data[[target]]
+    r2 = make_r2(preds, actual, model_has_intercept)
+    adjr2 = make_adjr2(preds, actual, k, model_has_intercept)
+    dxy = rcorr.cens(preds, actual)['Dxy']
+    
+    if (concise){
+        metrics = c(r2, adjr2, dxy)
+        names(metrics) = c('r2', 'adjr2', 'dxy')
+        return(list(
+            'fml'=fml,
+            'fit'=fit$coefficients,
+            'weights'=round(wts$weights*100,2),
+            'signs'=wts$signs,
+            'metrics'=metrics
+        ))
+    } else{
+        print(summary(fit))
+        return(list(
+            'fml'=fml,
+            'fit'=fit,
+            'weights'=wts,
+            'r2'=r2,
+            'adjr2'=adjr2,
+            'dxy'=dxy
+        ))
+    }
+}
 
-    man_wts = c(0.25, 0.3, 0.25, 0.2); names(man_wts) = names(w$weights); man_wts
-    man_para = c(inter, weights_to_parameters(man_wts, w$signs, w$calibration[1]))
-    fml = parameters_to_formula(man_para, 'mpg')
-    make_adjr2(eval(parse(text = fml), data), data$mpg, 4)
+# Examples
+# -------------
+# > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
+# > data = purrr::map(mtcars, std) |> dplyr::bind_cols()
+# > data$mpg = mtcars$mpg
+# > fit = fit_lm(c('disp', 'hp', 'wt', 'qsec', 'am'), 'mpg', data, 5)
+# > fit
+# > test_wts(c('disp', 'hp', 'wt', 'qsec', 'am'), c(0.1, 0.15, 0.4, 0.2, 0.15),
+# >     fit$signs, 'mpg', data, 5)
+# > test_wts(c('disp', 'hp', 'wt', 'qsec', 'am'), c(0, 0.2, 0.4, 0.2, 0.2),
+# >     fit$signs, 'mpg', data, 4)
+test_wts = function(
+        variables,
+        weights,
+        signs,
+        target,
+        data,
+        k,
+        concise=TRUE
+    ){
+    man_wts = weights
+    names(man_wts) = variables
+    fml = parameters_to_formula(c(1, man_wts * signs), target)
+    x = eval(parse(text = fml), data)
+    y = data[[target]]
+    ce = lm(y ~ 1 + x)$coefficients
+    calibration_a = ce[2]
+    calibration_b = ce[1]
 
-    man_wts = c(0.25, 0.25, 0.25, 0.25); names(man_wts) = names(w$weights); man_wts
-    man_para = c(inter, weights_to_parameters(man_wts, w$signs, w$calibration[1]))
-    fml = parameters_to_formula(man_para, 'mpg')
-    make_adjr2(eval(parse(text = fml), data), data$mpg, 4)
+    preds = eval(parse(text = fml), data) * calibration_a + calibration_b
+    actual = data[[target]]
+    r2 = make_r2(preds, actual)
+    adjr2 = make_adjr2(preds, actual, k)
+    dxy = rcorr.cens(preds, actual)['Dxy']
 
-    man_wts = c(0.3, 0.3, 0.3, 0.1); names(man_wts) = names(w$weights); man_wts
-    man_para = c(inter, weights_to_parameters(man_wts, w$signs, w$calibration[1]))
-    fml = parameters_to_formula(man_para, 'mpg')
-    make_adjr2(eval(parse(text = fml), data), data$mpg, 4)
+    if (concise){
+        metrics = c(r2, adjr2, dxy)
+        names(metrics) = c('r2', 'adjr2', 'dxy')
+        return(list(
+            'fml'=fml,
+            'calibration'=ce,
+            'weights'=round(weights*100,2),
+            'metrics'=metrics
+        ))
+    } else{
+        print(summary(fit))
+        return(list(
+            'fml'=fml,
+            'calibration_a'=calibration_a,
+            'calibration_b'=calibration_b,
+            'weights'=round(weights*100,2),
+            'r2'=r2,
+            'adjr2'=adjr2,
+            'dxy'=dxy
+        ))
+    }
+}
 
-    man_wts = c(0.33, 0.33, 0.34, 0); names(man_wts) = names(w$weights); man_wts
-    man_para = c(inter, weights_to_parameters(man_wts, w$signs, w$calibration[1]))
-    fml = parameters_to_formula(man_para, 'mpg')
-    make_adjr2(eval(parse(text = fml), data), data$mpg, 3)
+if (identical(environment(), globalenv())){
+    1
 }
