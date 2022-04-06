@@ -50,6 +50,16 @@ make_adjr2 <- function (preds, actual, k, model_has_intercept = TRUE) {
     }
 }
 
+# Examples
+# -----------
+# > fit = lm(mpg~cyl+disp, mtcars)
+# > summary(fit)
+# > make_rmse(fit$fitted.value, mtcars$mpg)
+# > sqrt(sum(fit$residuals^2)/length(fit$residuals))
+make_rmse = function(preds, actual){
+    sqrt(mean((preds - actual) ^ 2, na.rm=TRUE))
+}
+
 if (identical(environment(), globalenv())){
     1
 }
