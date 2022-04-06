@@ -1,13 +1,81 @@
-import::here(here, here)
-import::here('rsq.r', make_r2, make_adjr2, .directory = here('model'))
 import::here(stringr, str_c)
 import::here(Hmisc, rcorr.cens)
 
+# Do standardization
+# 
 # Examples
 # -----------
 # > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 
+# Make adjusted/unadjusted R squared
+#
+# Examples
+# --------------
+# > fit = lm(mpg ~ cyl + disp, mtcars); summary(fit)
+# 
+# Residuals:
+#     Min      1Q  Median      3Q     Max
+# -4.4213 -2.1722 -0.6362  1.1899  7.0516
+# 
+# Residual standard error: 3.055 on 29 degrees of freedom
+# Multiple R-squared:  0.7596,    Adjusted R-squared:  0.743
+# F-statistic: 45.81 on 2 and 29 DF,  p-value: 1.058e-09
+# 
+# > make_r2(predict(fit, mtcars), mtcars$mpg)
+# [1] 0.7595658
+# > make_adjr2(predict(fit, mtcars), mtcars$mpg, 2)
+# [1] 0.7429841
+# > fit = lm(mpg ~ 0 + cyl + disp, mtcars); summary(fit)
+#
+# Residual standard error: 8.164 on 30 degrees of freedom
+# Multiple R-squared:  0.8576,    Adjusted R-squared:  0.8481
+# F-statistic: 90.33 on 2 and 30 DF,  p-value: 2.008e-13
+# 
+# > make_r2(predict(fit, mtcars), mtcars$mpg, model_has_intercept = FALSE)
+# [1] 0.8575967
+# > make_adjr2(predict(fit, mtcars), mtcars$mpg, 2, model_has_intercept = FALSE)
+# [1] 0.8481031
+make_r2 <- function (preds, actual, model_has_intercept = TRUE){
+    if (model_has_intercept){
+        rss <- sum((preds - actual) ^ 2, na.rm = TRUE)
+        tss <- sum((actual - mean(actual)) ^ 2, na.rm = TRUE)
+        return(1 - rss/tss)
+    } else if (!model_has_intercept) {
+        rss <- sum((preds - actual) ^ 2, na.rm = TRUE)
+        tss <- sum((actual) ^ 2, na.rm = TRUE)
+        return(1 - rss/tss)
+    } else {
+        return('invalid model_has_intercept')
+    }
+}
+
+make_adjr2 <- function (preds, actual, k, model_has_intercept = TRUE) {
+    n = sum(!is.na(preds))
+    r2 = make_r2(preds, actual, model_has_intercept)
+    if (model_has_intercept){
+        return(1 - (1 - r2) * (n - 1)/(n - k - 1))
+    } else if (!model_has_intercept) {
+        return(1 - (1 - r2) * (n)/(n - k))
+    } else {
+        return('invalid model_has_intercept')
+    }
+}
+
+# Make rmse
+#
+# Examples
+# -----------
+# > fit = lm(mpg~cyl+disp, mtcars)
+# > summary(fit)
+# > make_rmse(fit$fitted.value, mtcars$mpg)
+# > sqrt(sum(fit$residuals^2)/length(fit$residuals))
+make_rmse = function(preds, actual){
+    sqrt(mean((preds - actual) ^ 2, na.rm=TRUE))
+}
+
+# Linear regression parameters and weights conversion
+#
 # Examples
 # -----------
 # > data = purrr::map(mtcars, std) |> dplyr::bind_cols()
@@ -47,6 +115,8 @@ weights_to_parameters <- function(weights, signs, calibration_a){
     weights*signs*sum(abs(calibration_a))
 }
 
+# Linear regression parameters to R formula
+#
 # Examples
 # -----------
 # > fit = lm(mpg ~ cyl+disp, mtcars)
@@ -71,6 +141,8 @@ parameters_to_formula = function(parameters, target){
     as.formula(fml_target)
 }
 
+# Make R formula from linear regression variable choice specifications
+#
 # Examples
 # -------------
 # > fml = make_formula(c('cyl', 'disp', 'hp', 'drat'), 'mpg')
@@ -87,6 +159,8 @@ make_formula = function(variables, target, intercept = 1){
     as.formula(fml_target)
 }
 
+# Linear regression parameters to parameters that would have achived if normalised prior to regression
+#
 # Examples
 # --------------
 # > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
@@ -116,6 +190,10 @@ parameters_to_norm_parameters <- function(intercept, parameters, means, stds) {
     )
 }
 
+# Fit linear model, additionally report weights, additional metrics
+#
+# Examples
+# ------------
 # > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
 # > data = purrr::map(mtcars, std) |> dplyr::bind_cols()
 # > data$mpg = mtcars$mpg
@@ -169,6 +247,8 @@ fit_lm = function(
     }
 }
 
+# Test linear model specified via weights, report calibration parameters, and metrics
+#
 # Examples
 # -------------
 # > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
