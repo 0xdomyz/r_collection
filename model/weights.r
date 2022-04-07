@@ -1,5 +1,12 @@
 import::here(stringr, str_c)
 import::here(Hmisc, rcorr.cens)
+import::here(
+    ggplot2,
+    ggplot,
+    aes_string,
+    geom_point,
+    ggtitle
+)
 
 # Do standardization
 # 
@@ -190,6 +197,27 @@ parameters_to_norm_parameters <- function(intercept, parameters, means, stds) {
     )
 }
 
+# Make scatter plot
+#
+# Examples
+# -----------
+# > plot_scatter(mtcars, 'mpg', 'disp')
+# > data = mtcars
+# > data['cyl_gt_5'] = ifelse(data['cyl'] > 5, 1, 0)
+# > plot_scatter(data, 'mpg', 'disp', 'cyl_gt_5')
+plot_scatter = function(data, x, y, z = NA) {
+    if (is.na(z)) {
+        plt = ggplot(data, aes_string(x = x, y = y)) +
+            geom_point() +
+            ggtitle(paste0(x, ' vs ', y))
+    } else {
+        plt = ggplot(data, aes_string(x = x, y = y, colour = z)) +
+            geom_point() +
+            ggtitle(paste0(x, ' vs ', y, ' coloured by ', z))
+    }
+    return(plt)
+}
+
 # Fit linear model, additionally report weights, additional metrics
 #
 # Examples
@@ -223,7 +251,10 @@ fit_lm = function(
     r2 = make_r2(preds, actual, model_has_intercept)
     adjr2 = make_adjr2(preds, actual, k, model_has_intercept)
     dxy = rcorr.cens(preds, actual)['Dxy']
-    
+
+    plt_data = data.frame(fitted=preds, actual=actual)
+    plt = plot_scatter(plt_data, 'fitted', 'actual')
+
     if (concise){
         metrics = c(r2, adjr2, dxy)
         names(metrics) = c('r2', 'adjr2', 'dxy')
@@ -236,13 +267,15 @@ fit_lm = function(
         ))
     } else{
         print(summary(fit))
+        plt
         return(list(
             'fml'=fml,
             'fit'=fit,
             'weights'=wts,
             'r2'=r2,
             'adjr2'=adjr2,
-            'dxy'=dxy
+            'dxy'=dxy,
+            'plt'=plt
         ))
     }
 }
@@ -284,6 +317,9 @@ test_wts = function(
     adjr2 = make_adjr2(preds, actual, k)
     dxy = rcorr.cens(preds, actual)['Dxy']
 
+    plt_data = data.frame(fitted=preds, actual=actual)
+    plt = plot_scatter(plt_data, 'fitted', 'actual')
+
     if (concise){
         metrics = c(r2, adjr2, dxy)
         names(metrics) = c('r2', 'adjr2', 'dxy')
@@ -295,6 +331,7 @@ test_wts = function(
         ))
     } else{
         print(summary(fit))
+        plt
         return(list(
             'fml'=fml,
             'calibration_a'=calibration_a,
@@ -302,7 +339,8 @@ test_wts = function(
             'weights'=round(weights*100,2),
             'r2'=r2,
             'adjr2'=adjr2,
-            'dxy'=dxy
+            'dxy'=dxy,
+            'plt'=plt
         ))
     }
 }
