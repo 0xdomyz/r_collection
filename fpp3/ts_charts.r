@@ -23,21 +23,21 @@ plot_2_ts = function(data, x, y, index_col) {
 }
 
 
+# Make scatter plot
+#
 # Examples
 # -----------
-# > plot_scatter(fpp3::us_change, 'Consumption', 'Income')
-# > data = fpp3::us_change
-# > data['pos_unemployment'] = ifelse(data['Unemployment'] > 0, 1, 0)
-# > plot_scatter(data, 'Consumption', 'Income', 'pos_unemployment')
+# > plot_scatter(mtcars, 'mpg', 'disp')
+# > data = mtcars
+# > data['cyl_gt_5'] = ifelse(data['cyl'] > 5, 1, 0)
+# > plot_scatter(data, 'mpg', 'disp', 'cyl_gt_5')
 plot_scatter = function(data, x, y, z = NA) {
     if (is.na(z)) {
-        plt = data %>%
-            ggplot(aes_string(x = x, y = y)) +
+        plt = ggplot(data, aes_string(x = x, y = y)) +
             geom_point() +
             ggtitle(paste0(x, ' vs ', y))
     } else {
-        plt = data %>%
-            ggplot(aes_string(x = x, y = y, colour = z)) +
+        plt = ggplot(data, aes_string(x = x, y = y, colour = z)) +
             geom_point() +
             ggtitle(paste0(x, ' vs ', y, ' coloured by ', z))
     }
