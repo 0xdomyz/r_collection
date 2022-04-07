@@ -304,7 +304,7 @@ test_wts = function(
     ){
     man_wts = weights
     names(man_wts) = variables
-    fml = parameters_to_formula(c(1, man_wts * signs), target)
+    fml = parameters_to_formula(c(0, man_wts * signs), target)
     x = eval(parse(text = fml), data)
     y = data[[target]]
     ce = lm(y ~ 1 + x)$coefficients
@@ -330,13 +330,12 @@ test_wts = function(
             'metrics'=metrics
         ))
     } else{
-        print(summary(fit))
         plt
         return(list(
             'fml'=fml,
             'calibration_a'=calibration_a,
             'calibration_b'=calibration_b,
-            'weights'=round(weights*100,2),
+            'weights'=weights,
             'r2'=r2,
             'adjr2'=adjr2,
             'dxy'=dxy,
