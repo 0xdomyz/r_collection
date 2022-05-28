@@ -22,10 +22,10 @@ std = function(v) {
 }
 
 
-std_parameters = function (data) {
+std_fit = function (data) {
   if (FALSE) {
     #Examples
-    a = std_parameters(mtcars)
+    a = std_fit(mtcars)
     a$stds
     #   mpg   cyl  disp    hp  drat    wt  qsec    vs    am  gear  carb
     # 1  6.03  1.79  124.  68.6 0.535 0.978  1.79 0.504 0.499 0.738  1.62
@@ -41,17 +41,17 @@ std_parameters = function (data) {
 }
 
 
-apply_std = function(std_parameters, data) {
+std_transform = function(parameters, data) {
   if (FALSE) {
     #Examples
-    p = std_parameters(mtcars[1:5])
-    apply_std(p, mtcars+1) |> head(., n=1)
+    p = std_fit(mtcars[1:5])
+    std_transform(p, mtcars+1) |> head(., n=1)
     #mpg   cyl   disp     hp  drat
     #1 0.317 0.455 -0.563 -0.521  2.44
   }
-  data = data[std_parameters$variables]
-  means = as.numeric(std_parameters$means)
-  stds = as.numeric(std_parameters$stds)
+  data = data[parameters$variables]
+  means = as.numeric(parameters$means)
+  stds = as.numeric(parameters$stds)
   purrr::pmap(list(data, means, stds),
     function(v, m, std) (v-m)/std) |> dplyr::bind_cols()
 }
