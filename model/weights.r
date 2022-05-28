@@ -8,12 +8,54 @@ import::here(
     ggtitle
 )
 
-# Do standardization
-# 
-# Examples
-# -----------
-# > std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
-std <- function(v) (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
+#Calculate standardization variables
+std = function(v) {
+  if (FALSE) {
+    #Examples
+    std(c(1,2,3,4,5,NA,7))
+    # [1] -1.2344268 -0.7715167 -0.3086067  0.1543033  0.6172134         NA  1.5430335
+
+    #apply std on data
+    purrr::map(mtcars, std) |> dplyr::bind_cols()
+  }
+  (v-mean(v, na.rm = TRUE))/sqrt(var(v, na.rm = TRUE))
+}
+
+
+std_parameters = function (data) {
+  if (FALSE) {
+    #Examples
+    a = std_parameters(mtcars)
+    a$stds
+    #   mpg   cyl  disp    hp  drat    wt  qsec    vs    am  gear  carb
+    # 1  6.03  1.79  124.  68.6 0.535 0.978  1.79 0.504 0.499 0.738  1.62
+  }
+  means = purrr::map_df(data, function(v) mean(v, na.rm = TRUE))
+  stds = purrr::map_df(data, function(v) sqrt(var(v, na.rm = TRUE)))
+
+  return(list(
+    "variables"=colnames(means),
+    "means"=means,
+    "stds"=stds
+  ))
+}
+
+
+apply_std = function(std_parameters, data) {
+  if (FALSE) {
+    #Examples
+    p = std_parameters(mtcars[1:5])
+    apply_std(p, mtcars+1) |> head(., n=1)
+    #mpg   cyl   disp     hp  drat
+    #1 0.317 0.455 -0.563 -0.521  2.44
+  }
+  data = data[std_parameters$variables]
+  means = as.numeric(std_parameters$means)
+  stds = as.numeric(std_parameters$stds)
+  purrr::pmap(list(data, means, stds),
+    function(v, m, std) (v-m)/std) |> dplyr::bind_cols()
+}
+
 
 # Make adjusted/unadjusted R squared
 #
