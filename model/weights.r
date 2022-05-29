@@ -44,14 +44,16 @@ std_fit = function (data) {
 std_transform = function(parameters, data) {
   if (FALSE) {
     #Examples
-    p = std_fit(mtcars[1:5])
-    std_transform(p, mtcars+1) |> head(., n=1)
-    #mpg   cyl   disp     hp  drat
-    #1 0.317 0.455 -0.563 -0.521  2.44
+    std_paras = std_fit(mtcars[c("hp","mpg","vs")])
+    std_transform(std_paras, mtcars) |> summary()
+    std_transform(std_paras, rbind(mtcars,mtcars)) |> summary()
+    std_transform(std_paras, mtcars[c("vs","mpg")]) |> summary()
+    std_transform(std_paras, mtcars[c("carb","wt")]) |> summary()
   }
-  data = data[parameters$variables]
-  means = as.numeric(parameters$means)
-  stds = as.numeric(parameters$stds)
+  common_var = intersect(colnames(data), parameters$variables)
+  data = data[common_var]
+  means = as.numeric(parameters$means[common_var])
+  stds = as.numeric(parameters$stds[common_var])
   purrr::pmap(list(data, means, stds),
     function(v, m, std) (v-m)/std) |> dplyr::bind_cols()
 }
