@@ -1,0 +1,26 @@
+str: a ~ b + c
+nbr: 0.2346
+vars2: [aaa, cc, bbb]
+nbr_vars2: [1.4, 2.5, 0.0]
+nbr_lst:
+  - 0.3
+  - 4.2
+  - 5.0
+lst2:
+ - aaa
+ - bbb
+ - ccc
+
+name: Martin D'vloper
+job: Developer
+skill: Elite
+vec: c(1,2,3,4,5)
+file: aaa.csv
+lst: 
+  - aa
+  - 0.34
+  - 6
+vars: ["aaa", "cc", "bbb"]
+vars3: [a aa, c c, bbb]
+nbr_vars: [1.4, 2, 0.0]
+nbr_vars3: [1, 2, 0]
