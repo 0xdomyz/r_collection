@@ -9,51 +9,43 @@ library(zoo)
 ###########################################################################################
 plot_2_ts_top_down <- function(data, x, y, index_col) {
     data <- data[, c(index_col, x, y)]
-    colnames(data) <- c("index", x, y)
     plt <- data %>%
         tidyr::pivot_longer(
             c({{ x }}, {{ y }}),
             names_to = "var",
             values_to = "value"
         ) %>%
-        ggplot(aes(x = index, y = value)) +
+        ggplot(aes_string(x = index_col, y = "value")) +
         geom_line() +
         facet_grid(vars(var), scales = "free_y") +
         ggtitle(paste0(x, " vs ", y))
     return(plt)
 }
 
-df <- fpp3::us_change
-df <- df %>% filter(Quarter >= yearquarter("2000 Q1"))
+df <- fpp3::us_change %>% filter(Quarter >= yearquarter("2000 Q1"))
 
 # plot
 p <- plot_2_ts_top_down(df, "Consumption", "Income", "Quarter")
 p
-
-# x labels more frequent
-p +
-    scale_x_yearquarter(date_breaks = "1 year", date_labels = "%Y")
+p + scale_x_yearquarter(date_breaks = "1 year", date_labels = "%Y")
 
 
 # plot 2 time series on same chart, scales on left and right sides, use ggplot2, tsibble
 ###########################################################################################
 plot_2_ts <- function(df, x, y, index_col) {
     df <- df[, c(index_col, x, y)]
-    colnames(df) <- c("index", x, y)
     p <- df %>%
-        ggplot(aes(x = index)) +
-        geom_line(aes_string(y = x), colour = "blue") +
+        ggplot(aes_string(x = index_col)) +
+        geom_line(aes_string(y = x), colour = "black") +
         geom_line(aes_string(y = y), colour = "red") +
         scale_y_continuous(
-            sec.axis = sec_axis(~ . * 100, name = y)
+            sec.axis = sec_axis(~ . * 1, name = y)
         ) +
         ggtitle(paste0(x, " vs ", y))
     return(p)
 }
 
-df <- fpp3::us_change %>%
-    filter(Quarter >= yearquarter("2000 Q1")) %>%
-    select(Quarter, Consumption, Income)
+df <- fpp3::us_change %>% filter(Quarter >= yearquarter("2000 Q1"))
 
 p <- plot_2_ts(df, x = "Consumption", y = "Income", index_col = "Quarter")
 p
