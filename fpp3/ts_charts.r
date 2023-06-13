@@ -41,7 +41,13 @@ plot_2_ts <- function(df, x, y, index_col) {
         scale_y_continuous(
             sec.axis = sec_axis(~ . * 1, name = y)
         ) +
-        ggtitle(paste0(x, " vs ", y))
+        ggtitle(paste0(
+            x,
+            "(black) vs ",
+            y,
+            "(red)"
+        ))
+
     return(p)
 }
 
