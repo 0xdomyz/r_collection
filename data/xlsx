@@ -1,0 +1,10 @@
+library(readxl)
+
+# Set the path to the xlsx file
+xlsx_file <- "path/to/file.xlsx"
+
+# Read the sheet with string as factor false
+data <- read_excel(xlsx_file, sheet = "Sheet1")
+
+# Print the data
+print(data)
