@@ -1,0 +1,11 @@
+
+Call:
+lm(formula = "mpg ~ cyl + disp + hp + drat + wt + qsec + vs + am + gear + carb", 
+    data = mtcars)
+
+Coefficients:
+(Intercept)          cyl         disp           hp         drat           wt  
+   12.30337     -0.11144      0.01334     -0.02148      0.78711     -3.71530  
+       qsec           vs           am         gear         carb  
+    0.82104      0.31776      2.52023      0.65541     -0.19942  
+
