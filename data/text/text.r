@@ -25,3 +25,7 @@ fit
 sink()
 
 fit
+
+# display a number in more decimal places
+long <- 0.23542563463462362356253623346236235344
+print(long, digits = 22)
