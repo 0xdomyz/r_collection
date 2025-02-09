@@ -1,26 +1,29 @@
 library(shiny)
 library(shinydashboard)
 
+# set up
+set.seed(122)
+histdata <- rnorm(500)
+
 ui <- dashboardPage(
   dashboardHeader(title = "Basic Dashboard"),
   dashboardSidebar(),
   dashboardBody(
     fluidRow(
-      box(plotOutput("plot1", height = 250)),
 # input
-      box(
-        title = "Controls",
+      column(
+        4,
         sliderInput("input1", "Number of observations:", 1, 100, 50)
-      )
+      ),
+# output
+      column(8, plotOutput("plot1", height = 250))
     )
   )
 )
 
 
 server <- function(input, output) {
-  # set up
-  set.seed(122)
-  histdata <- rnorm(500)
+
 
   # process & results
   output$plot1 <- renderPlot({
