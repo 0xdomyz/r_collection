@@ -1,5 +1,7 @@
 # data
 /**/neiss/*
+/shiny/interactive_db/*.csv
+/shiny/interactive_db/*.xls
 
 *.png
 
