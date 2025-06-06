@@ -4,6 +4,7 @@
 /shiny/interactive_db/*.xls
 
 *.png
+*.docx
 
 # History files
 .Rhistory

@@ -1,0 +1,90 @@
+---
+title: "analysis_1"
+author: "dz"
+date: "2025-06-06"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# data
+
+```{r titan}
+df = titanic::titanic_train
+str(head(df))
+```
+```{r}
+summary(df)
+```
+
+# data engi
+
+```{r}
+df$Survived = factor(df$Survived, levels = c(0, 1), labels = c("No", "Yes"))
+print(table(df$Survived))
+
+```
+
+```{r}
+
+df$Sex = factor(df$Sex)
+print(table(df$Sex, df$Survived))
+
+```
+
+```{r}
+
+df$Pclass = factor(df$Pclass)
+print(table(df$Pclass, df$Survived))
+
+```
+
+```{r}
+# auto histogram the ages, plot, then bin it, then check the survival ralation in a easy way
+cuts = seq(0, 80, by = 10)
+df$AgeGroup = cut(df$Age, breaks = cuts, include.lowest = TRUE, right = FALSE)
+table(df$AgeGroup, df$Survived)
+
+```
+
+# model
+
+```{r}
+# Build a logistic regression model
+mdl = glm(Survived ~ Pclass + Sex + Age, data = df, family = binomial())
+
+# Summarize the model
+summary(mdl)
+
+```
+
+```{r}
+library(pROC)
+
+predicted_probs = predict(mdl, type = "response", newdata = df)
+
+# Compute ROC curve
+roc_curve = roc(df$Survived, predicted_probs)
+
+# Extract AUC value
+auc_value = auc(roc_curve)
+ 
+# Compute Gini coefficient
+gini_ratio = 2 * auc_value - 1
+
+gini_ratio
+```
+
+
+```{r}
+library(ggplot2)
+
+# Plot ROC curve
+ggroc(roc_curve) +
+  ggtitle(paste("ROC Curve (AUC =", round(auc_value, 3), ")")) +
+  xlab("False Positive Rate") +
+  ylab("True Positive Rate") +
+  theme_minimal()
+```
